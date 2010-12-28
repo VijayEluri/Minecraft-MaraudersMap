@@ -78,6 +78,11 @@ window.mcgps = {
 		var position = this.playerPosition(data);
 
 		var iconUrl = 'http://www.minecraft.net/skin/' + data.name + '.png';
+        this.players[data.name] = {
+            marker: null,
+            name: data.name,
+            active: true
+        };
 
 		// first load the player's skin to see if they have a custom one
 		// choose what URL to give the marker after loading
@@ -91,11 +96,7 @@ window.mcgps = {
 			});
 
 
-			mcgps.players[data.name] = {
-				marker: marker,
-				name: data.name,
-				active: true
-			};
+            mcgps.players[data.name].marker = marker;
 		};
 		jQuery('<img src="' + iconUrl + '">').load(function() {
 			placeMarker(iconUrl);
@@ -106,8 +107,11 @@ window.mcgps = {
 	},
 
 	updatePlayer: function(data) {
+        if (!this.players[data.name].marker) {
+            return;
+        }
 		this.players[data.name].marker.setPosition(
-		this.playerPosition(data));
+            this.playerPosition(data));
 	}
 };
 
