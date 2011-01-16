@@ -17,9 +17,14 @@ public class PlayerListManager extends Thread {
 	private static final String FILE_NAME = "player-locations.json";
 	
 	/** Sleep this long between updates */
-	private static final int DELAY_MILLIS = 500;
+	private static final int DEFAULT_DELAY_MILLIS = 1000;
+	
+	/** Minimum sleep time */
+	private static final int MIN_DELAY_MILLIS = 50;
 	
 	private static PlayerListManager runningThread = null;
+	
+	private final int delayMillis;
 	
 	/**
 	 * Private constructor; use PLM.startUpdating to get a Manager
@@ -27,8 +32,16 @@ public class PlayerListManager extends Thread {
 	 */
 	private PlayerListManager(MaraudersMap plugin) {
 		this.plugin = plugin;
+		int delayMillis = plugin.getConfiguration().getInt("mmap-delay", DEFAULT_DELAY_MILLIS);
+		if (delayMillis < MIN_DELAY_MILLIS) {
+			delayMillis = MIN_DELAY_MILLIS;
+			log.warning("Marauder's Map: Configured delay too small. If you need a 60fps, recompile the plugin ;)");
+		}
+		this.delayMillis = delayMillis;
+		
+		log.info("Marauder's Map: Set polling delay to " + delayMillis + "ms");
 	}
-
+	
 	/**
 	 * Start and register the PlayerListManager. If one is already running, returns null and exits.
 	 * @param plugin The plugin to stay attached to
@@ -81,7 +94,7 @@ public class PlayerListManager extends Thread {
 			}
 			
 			try {
-				Thread.sleep(DELAY_MILLIS);
+				Thread.sleep(delayMillis);
 			} catch (InterruptedException interruptedException) {
 				log.warning("Marauder's Map just freaked out: " + interruptedException.toString());
 			}
