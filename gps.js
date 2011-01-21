@@ -77,7 +77,8 @@ window.mcgps = {
 	newPlayer: function(data) {
 		var position = this.playerPosition(data);
 
-		var iconUrl = 'http://www.minecraft.net/skin/' + data.name + '.png';
+		var iconUrl = 'http://s3.amazonaws.com/MinecraftSkins/' + \
+                      data.name + '.png';
         this.players[data.name] = {
             marker: null,
             name: data.name,
