@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 public class PlayerListManager extends Thread {
@@ -174,6 +175,13 @@ public class PlayerListManager extends Thread {
 		for (Player player : players.values()) {
 			sb.append("{\"name\":\"");
 			sb.append(player.getDisplayName());
+
+			World world = player.getWorld();
+			if (world != null) {
+				sb.append("\", \"world\":\"");
+				// This is starting to get dangerous; a JSON writer might be a good idea
+				sb.append(player.getWorld().getName().replace('"', '\''));
+			}
 			
 			Location location = player.getLocation();
 			sb.append("\",\"x\":");
