@@ -3,15 +3,13 @@ package com.bukkit.ojrac;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Logger;
 
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
-public class PlayerListManager extends Thread {
+public class PlayerListManager implements Runnable {
 	protected static final Logger log = Logger.getLogger("Minecraft");
 	
 	/** The name of the output file */
@@ -22,8 +20,21 @@ public class PlayerListManager extends Thread {
 	
 	/** Minimum sleep time */
 	private static final int MIN_DELAY_MILLIS = 50;
+
+	/** How long do we expect each player to be in JSON? */
+	private static final int CHARS_PER_PLAYER_ESTIMATE = 50;
 	
-	private final int delayMillis;
+	/** How long to wait between updates */
+	public final int delayMillis;
+	
+	/** The controlling plugin */
+	private MaraudersMap plugin;
+
+	/** The map file; contains a json representation of the logged in players */
+	private RandomAccessFile file;
+
+	/** The hash code of the last JSON we saved to disk */
+	private int lastHashCode = 0;
 	
 	/**
 	 * Don't forget to call startUpdating
@@ -39,81 +50,25 @@ public class PlayerListManager extends Thread {
 		this.delayMillis = delayMillis;
 		
 		log.info("Marauder's Map: Set polling delay to " + delayMillis + "ms");
+		openMapFile();
 	}
-	
-	/**
-	 * Start and register the PlayerListManager. If one is already running, returns null and exits.
-	 * @param plugin The plugin to stay attached to
-	 * @return The PlayerListManager
-	 */
-	public synchronized void startUpdating() {
-		if (plugin == null) {
-			throw new IllegalArgumentException("Plugin must not be null");
-		}
-		
-		if (isRunning()) {
-			return;
-		}
-		
-		log.info("Starting Marauder's Map thread");
-		start();
-		
-		try {
-			setPriority(MIN_PRIORITY);
-		} catch(SecurityException e) {
-			log.info("Couldn't set Marauder's Map thread to minimum priority");
-		}
-	}
-	
-	public synchronized void stopUpdating() {
-		setRunning(false);
-	}
-	
-	public synchronized void setRunning(boolean value) {
-		running = value;
-	}
-	
-	public synchronized boolean isRunning() {
-		return running;
-	}
-	
-	private MaraudersMap plugin;
-	
-	private boolean running = false;
 	
 	@Override
 	public void run() {
-		if (plugin == null) {
-			
-		}
-		if (!openMapFile()) {
-			log.warning("Disabling Marauder's Map: Couldn't open map file");
+		if (file == null) {
+			log.warning("No location file found; stopping.");
+			plugin.getServer().getScheduler().cancelTasks(plugin);
 			return;
 		}
-		setRunning(true);
 		
-		while (isRunning()) {
-			if (stale) {
-				refreshMapFile();
-			}
-			
-			try {
-				Thread.sleep(delayMillis);
-			} catch (InterruptedException interruptedException) {
-				log.warning("Marauder's Map just freaked out: " + interruptedException.toString());
-			}
-		}
+		refreshMapFile();
 	}
-
-	/** The map file; contains a json representation of the logged in players */
-	private RandomAccessFile file;
 	
 	/**
 	 * Tries to open the map file for writing. Returns whether the operation was successful
 	 * @return
 	 */
 	private boolean openMapFile() {
-		stale = true;
 		try {
 			file = new RandomAccessFile(FILE_NAME, "rws");
 		} catch (FileNotFoundException fileNotFoundException) {
@@ -122,16 +77,8 @@ public class PlayerListManager extends Thread {
 		
 		return file != null;
 	}
-
-	/** The hash code of the last JSON we saved to disk */
-	private int lastHashCode = 0;
-	
-	/** Do we think the file needs to be refreshed? */
-	private boolean stale;
 	
 	private void refreshMapFile() {
-		stale = false;
-		
 		String json = generateJson();
 		int newHashCode = json.hashCode();
 		if (newHashCode == lastHashCode) {
@@ -141,9 +88,6 @@ public class PlayerListManager extends Thread {
 		
 		writeJson(json);
 	}
-
-	/** How long do we expect each player to be in JSON? */
-	private static final int CHARS_PER_PLAYER_ESTIMATE = 50;
 	
 	/** Converts the list of players to JSON */
 	private synchronized String generateJson() {
@@ -192,11 +136,5 @@ public class PlayerListManager extends Thread {
 		} catch (IOException ioException) {
 			log.info("Couldn't write player data to file -- " + ioException.toString());
 		}
-	}
-	
-
-	/** Forces a rebuild of player-locations.json */
-	public synchronized void markStale() {
-		stale = true;
 	}
 }
