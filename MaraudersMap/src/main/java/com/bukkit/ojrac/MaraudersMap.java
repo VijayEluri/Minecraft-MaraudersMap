@@ -4,6 +4,7 @@ import java.io.File;
 import org.bukkit.Server;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Priority;
+import org.bukkit.event.player.PlayerListener;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginLoader;
 import org.bukkit.plugin.PluginManager;
@@ -26,7 +27,10 @@ public class MaraudersMap extends JavaPlugin {
 
     @Override
     public void onEnable() {
-    	listManager = PlayerListManager.startUpdating(this);
+    	if (listManager == null) {
+    		listManager = new PlayerListManager(this);
+    	}
+    	listManager.startUpdating();
     	playerListener.setListManager(listManager);
     	
     	PluginManager pm = getServer().getPluginManager();
@@ -36,7 +40,7 @@ public class MaraudersMap extends JavaPlugin {
     }
 
 	public void onDisable() {
-    	PlayerListManager.stopUpdating();
+		listManager.stopUpdating();
     }
 }
 

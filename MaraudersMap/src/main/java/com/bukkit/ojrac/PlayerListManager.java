@@ -23,15 +23,13 @@ public class PlayerListManager extends Thread {
 	/** Minimum sleep time */
 	private static final int MIN_DELAY_MILLIS = 50;
 	
-	private static PlayerListManager runningThread = null;
-	
 	private final int delayMillis;
 	
 	/**
-	 * Private constructor; use PLM.startUpdating to get a Manager
+	 * Don't forget to call startUpdating
 	 * @param plugin The plugin instance
 	 */
-	private PlayerListManager(MaraudersMap plugin) {
+	public PlayerListManager(MaraudersMap plugin) {
 		this.plugin = plugin;
 		int delayMillis = plugin.getConfiguration().getInt("mmap-delay", DEFAULT_DELAY_MILLIS);
 		if (delayMillis < MIN_DELAY_MILLIS) {
@@ -48,30 +46,35 @@ public class PlayerListManager extends Thread {
 	 * @param plugin The plugin to stay attached to
 	 * @return The PlayerListManager
 	 */
-	public synchronized static PlayerListManager startUpdating(MaraudersMap plugin) {
+	public synchronized void startUpdating() {
 		if (plugin == null) {
 			throw new IllegalArgumentException("Plugin must not be null");
 		}
 		
-		if (runningThread != null) {
-			return runningThread;
+		if (isRunning()) {
+			return;
 		}
 		
 		log.info("Starting Marauder's Map thread");
-		runningThread = new PlayerListManager(plugin);
-		runningThread.start();
+		start();
 		
 		try {
-			runningThread.setPriority(MIN_PRIORITY);
+			setPriority(MIN_PRIORITY);
 		} catch(SecurityException e) {
 			log.info("Couldn't set Marauder's Map thread to minimum priority");
 		}
-		
-		return runningThread;
 	}
 	
-	public synchronized static void stopUpdating() {
-		runningThread.running = false;
+	public synchronized void stopUpdating() {
+		setRunning(false);
+	}
+	
+	public synchronized void setRunning(boolean value) {
+		running = value;
+	}
+	
+	public synchronized boolean isRunning() {
+		return running;
 	}
 	
 	private MaraudersMap plugin;
@@ -87,9 +90,9 @@ public class PlayerListManager extends Thread {
 			log.warning("Disabling Marauder's Map: Couldn't open map file");
 			return;
 		}
-		running = true;
+		setRunning(true);
 		
-		while (running) {
+		while (isRunning()) {
 			if (stale) {
 				refreshMapFile();
 			}
@@ -120,27 +123,6 @@ public class PlayerListManager extends Thread {
 		return file != null;
 	}
 
-	/** A named list of players, keyed by EntityId */
-	private Map<Integer, Player> players = new HashMap<Integer, Player>();
-	
-	/** Adds a player to the list */
-	public synchronized void addPlayer(Player player) {
-		players.put(player.getEntityId(), player);
-		stale = true;
-	}
-	
-	/** Removes a player */
-	public synchronized void removePlayer(Player player) {
-		players.remove(player.getEntityId());
-		stale = true;
-	}
-	
-	/** Notes that a player has moved */
-	public synchronized void movePlayer(Player player) {
-		//players.put(player.getEntityId(), player);
-		stale = true;
-	}
-
 	/** The hash code of the last JSON we saved to disk */
 	private int lastHashCode = 0;
 	
@@ -165,14 +147,16 @@ public class PlayerListManager extends Thread {
 	
 	/** Converts the list of players to JSON */
 	private synchronized String generateJson() {
-		if (players.size() == 0) {
+		Player[] players = plugin.getServer().getOnlinePlayers();
+		
+		if (players.length == 0) {
 			return "[]";
 		}
 		
-		StringBuilder sb = new StringBuilder(players.size()
+		StringBuilder sb = new StringBuilder(players.length
 				* CHARS_PER_PLAYER_ESTIMATE + 4);
 		sb.append("[");
-		for (Player player : players.values()) {
+		for (Player player : players) {
 			sb.append("{\"name\":\"");
 			sb.append(player.getDisplayName());
 
@@ -208,5 +192,11 @@ public class PlayerListManager extends Thread {
 		} catch (IOException ioException) {
 			log.info("Couldn't write player data to file -- " + ioException.toString());
 		}
+	}
+	
+
+	/** Forces a rebuild of player-locations.json */
+	public synchronized void markStale() {
+		stale = true;
 	}
 }

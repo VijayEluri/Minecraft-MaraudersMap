@@ -12,22 +12,18 @@ public class MaraudersMapPlayerListener extends PlayerListener {
 
     @Override
     public void onPlayerMove(PlayerMoveEvent event) {
-    	listManager.movePlayer(event.getPlayer());
+    	listManager.markStale();
     }
     
     @Override
     public void onPlayerJoin(PlayerEvent event) {
-    	listManager.addPlayer(event.getPlayer());
+    	listManager.markStale();
     }
     
     @Override
     public void onPlayerQuit(PlayerEvent event) {
-    	listManager.removePlayer(event.getPlayer());
+    	listManager.markStale();
     }
-
-	public PlayerListManager getListManager() {
-		return listManager;
-	}
 
 	public void setListManager(PlayerListManager listManager) {
 		this.listManager = listManager;
