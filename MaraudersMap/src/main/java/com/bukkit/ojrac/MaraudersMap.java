@@ -1,9 +1,4 @@
 package com.bukkit.ojrac;
-import java.io.File;
-
-import org.bukkit.Server;
-import org.bukkit.plugin.PluginDescriptionFile;
-import org.bukkit.plugin.PluginLoader;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
