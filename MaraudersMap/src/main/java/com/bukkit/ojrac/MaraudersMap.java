@@ -18,11 +18,6 @@ public class MaraudersMap extends JavaPlugin {
 	/** The plugin's runnable */
     private PlayerListManager listManager;
     
-    public MaraudersMap(PluginLoader pluginLoader, Server instance, PluginDescriptionFile desc,
-    		File folder, File plugin, ClassLoader cLoader) {
-    	super(pluginLoader, instance, desc, folder, plugin, cLoader);
-    }
-
     @Override
     public void onEnable() {
     	if (listManager == null) {
