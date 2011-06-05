@@ -89,7 +89,7 @@ window.mcgps = {
 		// choose what URL to give the marker after loading
 		var placeMarker = function(url) {
 			var marker = new google.maps.Marker({
-				map: map,
+				map: overviewer.map,
 				position: position,
 				title: data.name,
 				icon: mcgps.makeIcon(url),
