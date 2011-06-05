@@ -60,7 +60,7 @@ window.mcgps = {
 	},
 
 	playerPosition: function(coords) {
-		return fromWorldToLatLng(coords.x, coords.y, coords.z);
+		return overviewer.util.fromWorldToLatLng(coords.x, coords.y, coords.z);
 	},
 
 	makeIcon: function(url) {
