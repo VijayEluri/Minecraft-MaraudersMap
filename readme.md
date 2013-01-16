@@ -1,3 +1,9 @@
+Out of Date
+===========
+
+When I started this project, [Dynmap](http://dev.bukkit.org/server-mods/dynmap/) was nowhere near as good as it is today; you should just use it.
+
+
 Minecraft Marauder's Map
 ========================
 
